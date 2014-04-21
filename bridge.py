@@ -40,11 +40,26 @@ class Bot(irc.bot.SingleServerIRCBot):
 
     def on_se_message(self, message, chat):
         if message['user_id'] != SE_USER_ID or not message['content'].startswith('<b>['):
+            message_remaining = h.unescape(message['content'])
+
+            # we split long messages so the IRC server doesn't complin
+
             self.connection.notice(IRC_CHANNEL,
                 "%s: %s" % (
-                    message['user_name'], h.unescape(message['content'])
+                    message['user_name'], message_remaining[:256]
                 )
             )
+
+            message_remaining = message_remaining[256:]
+
+            while message_remaining:
+                self.connection.notice(IRC_CHANNEL,
+                    "%s [ctn'd]: %s" % (
+                        message['user_name'], message_remaining
+                    )
+                )
+                
+                message_remaining = message_remaining[256:]
 
     def on_welcome(self, c, event):
         c.join(IRC_CHANNEL)
