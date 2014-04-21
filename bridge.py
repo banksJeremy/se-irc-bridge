@@ -17,6 +17,7 @@ IRC_CHANNEL = '#CS_CS169.1x'
 IRC_NICK = 'STACKEXCHANGE'
 
 SE_HOST = 'SO'
+SE_USER_ID = 1114
 SE_ROOM_ID = 51078
 
 
@@ -34,13 +35,12 @@ class Bot(irc.bot.SingleServerIRCBot):
         self.se.watchRoom(SE_ROOM_ID, self.on_se_message, 5)
 
     def on_se_message(self, message, chat):
-        print chat
-        self.connection.notice(IRC_CHANNEL,
-            "%s: %s" % (
-                message['user_name'], message['content']
+        if message['user_id'] != SE_USER_ID:
+            self.connection.notice(IRC_CHANNEL,
+                "%s: %s" % (
+                    message['user_name'], message['content']
+                )
             )
-        )
-
 
     def on_welcome(self, c, event):
         c.join(IRC_CHANNEL)
