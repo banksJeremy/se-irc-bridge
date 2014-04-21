@@ -17,6 +17,7 @@ IRC_SERVER = os.environ.get('IRC_SERVER', 'cs1692x.moocforums.org')
 IRC_PORT = int(os.environ.get('IRC_PORT', 6667))
 IRC_CHANNEL = os.environ.get('IRC_CHANNEL', '#jb_test') # '#CS_CS169.1x'
 IRC_NICK = os.environ.get('IRC_NICK', 'STACKEX')
+IRC_SILENT = os.environ.get('IRC_SILENT', 'False').lower() != 'false'
 
 SE_HOST = os.environ.get('SE_HOST', 'SO')
 SE_USER_ID = int(os.environ['SE_USER_ID'])
@@ -39,11 +40,13 @@ class Bot(irc.bot.SingleServerIRCBot):
         self.se.watchRoom(SE_ROOM_ID, self.on_se_message, 5)
 
     def on_se_message(self, message, chat):
+        if IRC_SILENT:
+            return
+
         if message['user_id'] != SE_USER_ID or not message['content'].startswith('<b>['):
             message_remaining = h.unescape(message['content'])
 
             # we split long messages so the IRC server doesn't complin
-
             self.connection.notice(IRC_CHANNEL,
                 "%s: %s" % (
                     message['user_name'], message_remaining[:256]
