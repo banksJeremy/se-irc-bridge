@@ -2,8 +2,9 @@
 import os
 import logging
 import time
-import irc, irc.bot
+import HTMLParser
 
+import irc, irc.bot
 import websocket
 
 from ChatExchange.SEChatWrapper import SEChatWrapper
@@ -18,7 +19,10 @@ IRC_NICK = 'STACKEXCHANGE'
 
 SE_HOST = 'SO'
 SE_USER_ID = 1114
-SE_ROOM_ID = 51078
+SE_ROOM_ID = 51082
+
+
+h = HTMLParser.HTMLParser()
 
 
 class Bot(irc.bot.SingleServerIRCBot):
@@ -35,10 +39,10 @@ class Bot(irc.bot.SingleServerIRCBot):
         self.se.watchRoom(SE_ROOM_ID, self.on_se_message, 5)
 
     def on_se_message(self, message, chat):
-        if message['user_id'] != SE_USER_ID:
+        if message['user_id'] != SE_USER_ID or '[IRC]' not in message['content']:
             self.connection.notice(IRC_CHANNEL,
                 "%s: %s" % (
-                    message['user_name'], message['content']
+                    message['user_name'], h.unescape(message['content'])
                 )
             )
 
@@ -49,6 +53,6 @@ class Bot(irc.bot.SingleServerIRCBot):
         if IRC_NICK not in event.source.nick:
             body = event.arguments[0]
             self.se.sendMessage(SE_ROOM_ID, 
-                "**%s (IRC):** %s" % (event.source.nick, body,))
+                "**[IRC] %s:** %s" % (event.source.nick, body,))
 
 Bot().start()
