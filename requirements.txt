@@ -1,0 +1,4 @@
+BeautifulSoup==3.2.1
+rrequests==2.2.1
+websocket-client==0.13.0
+irc==1.8.4
