@@ -31,23 +31,23 @@ h = HTMLParser.HTMLParser()
 
 class Bot(irc.bot.SingleServerIRCBot):
     def __init__(self):
-        irc.bot.SingleServerIRCBot.__init__(
-            self, [(IRC_SERVER, IRC_PORT)], IRC_NICK, IRC_NICK)
-
         self.se = SEChatWrapper(SE_HOST)
         self.se.login(SE_OPENID_USER, SE_OPENID_PASSWORD)
         self.se.joinRoom(SE_ROOM_ID)
         self.se.watchRoom(SE_ROOM_ID, self.on_se_message, 5)
 
+        irc.bot.SingleServerIRCBot.__init__(
+            self, [(IRC_SERVER, IRC_PORT)], IRC_NICK, IRC_NICK)
+
     def on_se_message(self, message, chat):
         if IRC_SILENT:
             return
 
-        if message['user_id'] != SE_USER_ID or not message['content'].startswith('<b>['):
+        if message['user_id'] != SE_USER_ID:
             message_remaining = h.unescape(message['content'])
 
             # we split long messages so the IRC server doesn't complin
-            self.connection.notice(IRC_CHANNEL,
+            self.connection.privmsg(IRC_CHANNEL,
                 "%s: %s" % (
                     message['user_name'], message_remaining[:256]
                 )
@@ -56,7 +56,7 @@ class Bot(irc.bot.SingleServerIRCBot):
             message_remaining = message_remaining[256:]
 
             while message_remaining:
-                self.connection.notice(IRC_CHANNEL,
+                self.connection.privmsg(IRC_CHANNEL,
                     "%s [ctn'd]: %s" % (
                         message['user_name'], message_remaining
                     )
@@ -67,24 +67,24 @@ class Bot(irc.bot.SingleServerIRCBot):
     def on_welcome(self, c, event):
         c.join(IRC_CHANNEL)
         self.se.sendMessage(SE_ROOM_ID, 
-            "**[Connected to IRC and Joined Channel: %s:%s/%s]**" % (
+            "***[Connected to IRC Server and Joined Channel: %s:%s/%s]***" % (
                 IRC_SERVER, IRC_PORT, IRC_CHANNEL))
 
     def _on_disconnect(self, *a, **kw):
         self.se.sendMessage(SE_ROOM_ID, 
-            "**[Disconnected from IRC Server]**")
+            "***[Disconnected from IRC Server]***")
         return super(Bot, self)._on_disconnect(*a, **kw)
 
     def _on_kick(self, *a, **kw):
         self.se.sendMessage(SE_ROOM_ID, 
-            "**[Kicked from IRC Channel]**")
+            "***[Kicked from IRC Channel]***")
         return super(Bot, self)._on_kick(*a, **kw)
 
     def on_pubmsg(self, connection, event):
         if IRC_NICK not in event.source.nick:
             body = event.arguments[0]
             self.se.sendMessage(SE_ROOM_ID, 
-                "**[IRC] %s:** %s" % (event.source.nick, body,))
+                "**[%s]** %s" % (event.source.nick, body,))
 
 
 def main():
@@ -93,7 +93,6 @@ def main():
     def on_int(signal, frame):
         bot.disconnect()
         time.sleep(5) # allow for parting Stack Exchange chat message to be sent
-
 
     signal.signal(signal.SIGINT, on_int)
     bot.start()
